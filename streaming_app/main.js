@@ -46,12 +46,10 @@ app.get('/get/videos_info', (request, response, next) => {
     //response.status(500).json({ error: 'message' })
 });
 
-app.get('/public/recorded/:seq', (request, response) => {
-    var filename = path.join(__dirname, request.url);
-    filename = filename.replace(/%20/g, " ");
-    fs.stat(filename, function (err, stat) {
-        console.log('sending file: ' + filename);
-        console.log(path.extname(request.url));
+app.get('/public/recorded/:filepath', (request, response) => {
+    var filePath = path.join(__dirname, request.url);
+    filePath = filePath.replace(/%20/g, " ");
+    fs.stat(filePath, function (err, stat) {
         if(!stat || err){
             console.log(err);
             response.status(404).end();
@@ -59,11 +57,11 @@ app.get('/public/recorded/:seq', (request, response) => {
             switch (path.extname(request.url)) {
                 case '.m3u8':
                     response.set('Content-Type', 'application/vnd.apple.mpegurl');
-                    fs.createReadStream(filename).pipe(response);
+                    fs.createReadStream(filePath).pipe(response);
                     break;
                 case '.ts':
                     response.setHeader('Content-Type', 'video/MP2T');
-                    fs.createReadStream(filename).pipe(response);
+                    fs.createReadStream(filePath).pipe(response);
                     break;
             }
         }

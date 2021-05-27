@@ -41,7 +41,7 @@ app.get('/*', (request, response, next) => {
     next();
 });
 
-app.get('/get/videos_info', (request, response, next) => {
+app.get('/videos/info', (request, response, next) => {
     var videoInfoes = {
         'fileCount': 0,
         'filePath': [],

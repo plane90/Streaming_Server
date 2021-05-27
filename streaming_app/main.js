@@ -42,8 +42,20 @@ app.get('/*', (request, response, next) => {
 });
 
 app.get('/get/videos_info', (request, response, next) => {
-    response.json({ filePath: ['2021-05-12 14-37-58.m3u8', 'master.m3u8'] });
-    //response.status(500).json({ error: 'message' })
+    var videoInfoes = {
+        'fileCount': 0,
+        'filePath': [],
+        'common': []
+    }
+    var files = fs.readdirSync('public/recorded');
+    files.forEach(file => {
+        if (path.extname(file) === '.m3u8') {
+            videoInfoes.fileCount += 1;
+            videoInfoes.filePath.push(file);
+        }
+    });
+    videoInfoes.common.push({ 'dir': 'recorded', 'format': 'm3u8', 'version': 0.0001 });
+    response.json(videoInfoes);
 });
 
 app.get('/public/recorded/:filepath', (request, response) => {

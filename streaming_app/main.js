@@ -5,6 +5,8 @@ const port = 8080;
 var helmet = require('helmet');
 var csp = require('helmet-csp');
 var compression = require('compression');
+var fs = require('fs');
+var path = require('path');
 
 app.use(express.static('public'));
 app.use(helmet());
@@ -37,8 +39,39 @@ app.use((req, res, next) => {
 });
 
 app.get('/*', (request, response, next) => {
+    console.log(request.url);
     next();
 });
+
+app.get('/get/videos_info', (request, response, next) => {
+    response.json({ filePath: ['2021-05-12 14-37-58.m3u8', 'master.m3u8'] });
+    //response.status(500).json({ error: 'message' })
+});
+
+app.get('/public/recorded/:seq', (request, response) => {
+    console.log(request.url);
+    var filename = path.join(__dirname, request.url);
+    filename = filename.replace(/%20/g, " ");
+    fs.stat(filename, function (err, stat) {
+        console.log('sending file: ' + filename);
+        console.log(path.extname(request.url));
+        if(!stat || err){
+            console.log(err);
+            response.status(404).end();
+        } else {
+            switch (path.extname(request.url)) {
+                case '.m3u8':
+                    response.set('Content-Type', 'application/vnd.apple.mpegurl');
+                    fs.createReadStream(filename).pipe(response);
+                    break;
+                case '.ts':
+                    response.setHeader('Content-Type', 'video/MP2T');
+                    fs.createReadStream(filename).pipe(response);
+                    break;
+            }
+        }
+    });
+})
 
 app.use('/normal', normalRouter);
 app.use('/test', testRouter);

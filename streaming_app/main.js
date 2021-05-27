@@ -26,7 +26,6 @@ app.use(
 );
 app.use(compression());
 
-var normalRouter = require('./routes/normal');
 var testRouter = require('./routes/test');
 
 app.use((req, res, next) => {
@@ -39,7 +38,6 @@ app.use((req, res, next) => {
 });
 
 app.get('/*', (request, response, next) => {
-    console.log(request.url);
     next();
 });
 
@@ -49,7 +47,6 @@ app.get('/get/videos_info', (request, response, next) => {
 });
 
 app.get('/public/recorded/:seq', (request, response) => {
-    console.log(request.url);
     var filename = path.join(__dirname, request.url);
     filename = filename.replace(/%20/g, " ");
     fs.stat(filename, function (err, stat) {
@@ -73,7 +70,6 @@ app.get('/public/recorded/:seq', (request, response) => {
     });
 })
 
-app.use('/normal', normalRouter);
 app.use('/test', testRouter);
 
 app.use(function (req, res, next) {

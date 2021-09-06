@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var template = require('../lib/template');
+var fs = require('fs');
+var path = require('path');
 
 router.get('/recorded/', (request, response) => {
     var videoNode = `
@@ -31,6 +33,54 @@ router.get('/recorded/', (request, response) => {
         'access-control-allow-origin': '*'
     });
     response.send(html);
+});
+
+
+router.get('/live', function (req, res) {
+    var files = fs.readdirSync('public/live');
+    console.log(files[0]);
+    const filePath = path.join('public/live', files[0]);
+    const head = {
+        'Content-Type': 'video/mp4',
+    }
+    res.writeHead(200, head)
+    fs.createReadStream(filePath).pipe(res)
+    // const stat = fs.statSync(filePath)
+    // const fileSize = stat.size
+    // const range = req.headers.range
+    // console.log("req.headers.range " + req.headers.range);
+    // console.log("fileSize " + fileSize);
+    // if (range) {
+    //     const parts = range.replace(/bytes=/, "").split("-")
+    //     const start = parseInt(parts[0], 10)
+    //     const end = parts[1] ?
+    //         parseInt(parts[1], 10) :
+    //         fileSize - 1
+    //     const chunksize = (end - start) + 1
+    //     const file = fs.createReadStream(filePath, {
+    //         start,
+    //         end
+    //     })
+    //     const head = {
+    //         'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+    //         'Accept-Ranges': 'bytes',
+    //         'Content-Length': chunksize,
+    //         'Content-Type': 'video/mp4',
+    //     }
+    //     console.log("chunksize " + chunksize);
+    //     console.log("start " + start);
+    //     console.log("end " + end);
+    //     res.writeHead(206, head);
+    //     file.pipe(res);
+    // } else {
+    //     const head = {
+    //         'Content-Length': fileSize,
+    //         'Content-Type': 'video/mp4',
+    //     }
+    //     console.log("else ");
+    //     res.writeHead(200, head)
+    //     fs.createReadStream(filePath).pipe(res)
+    // }
 });
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 8080;
+const port = 10081;
 
 var helmet = require('helmet');
 var csp = require('helmet-csp');
@@ -33,12 +33,54 @@ app.use((req, res, next) => {
     res.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.append('Access-Control-Allow-Headers', 'Content-Type');
     //res.setHeader('X-Frame-Options','Allow-From http://10.112.59.112:8000');
-    res.setHeader('X-Frame-Options','sameorigin');
+    res.setHeader('X-Frame-Options', 'sameorigin');
     next();
 });
 
 app.get('/*', (request, response, next) => {
     next();
+});
+
+app.get('/video', function (req, res) {
+    var files = fs.readdirSync('public/live');
+    console.log(files[0]);
+    const filePath = path.join('public/live', files[0]);
+    const stat = fs.statSync(filePath)
+    const fileSize = stat.size
+    const range = req.headers.range
+    console.log("req.headers.range " + req.headers.range);
+    console.log("fileSize " + fileSize);
+    if (range) {
+        const parts = range.replace(/bytes=/, "").split("-")
+        const start = parseInt(parts[0], 10)
+        const end = parts[1] ?
+            parseInt(parts[1], 10) :
+            fileSize - 1
+        const chunksize = (end - start) + 1
+        const file = fs.createReadStream(filePath, {
+            start,
+            end
+        })
+        const head = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': 'video/mp4',
+        }
+        console.log("chunksize " + chunksize);
+        console.log("start " + start);
+        console.log("end " + end);
+        res.writeHead(206, head);
+        file.pipe(res);
+    } else {
+        const head = {
+            'Content-Length': fileSize,
+            'Content-Type': 'video/mp4',
+        }
+        console.log("else ");
+        res.writeHead(200, head)
+        fs.createReadStream(filePath).pipe(res)
+    }
 });
 
 app.get('/videos/info', (request, response, next) => {
@@ -54,7 +96,11 @@ app.get('/videos/info', (request, response, next) => {
             videoInfoes.filePath.push(file);
         }
     });
-    videoInfoes.common.push({ 'dir': 'recorded', 'format': 'm3u8', 'version': 0.0001 });
+    videoInfoes.common.push({
+        'dir': 'recorded',
+        'format': 'm3u8',
+        'version': 0.0001
+    });
     response.json(videoInfoes);
 });
 
@@ -62,7 +108,7 @@ app.get('/public/recorded/:filepath', (request, response) => {
     var filePath = path.join(__dirname, request.url);
     filePath = filePath.replace(/%20/g, " ");
     fs.stat(filePath, function (err, stat) {
-        if(!stat || err){
+        if (!stat || err) {
             console.log(err);
             response.status(404).end();
         } else {
